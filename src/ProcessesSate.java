@@ -1,9 +1,10 @@
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
+
 public class ProcessesSate {
 
-    ArrayList<MyProcess> processes;
 
     public static void main(String[] args) {
         MyProcess p1=new MyProcess("p1",2,6);
@@ -15,7 +16,8 @@ public class ProcessesSate {
         ArrayList<MyProcess> processes=new ArrayList<>(Arrays.asList(p1,p2,p3,p4,p5));
         ArrayList<ProcessAdv> processAdvs=ProcessAdv.advProcessFromNormalProcesses_Sort_FillTimes(processes);
 
-        ProcessAdv.CalculateState(processAdvs);
+        ProcessAdv.CalculateStateWithPrint(processAdvs);
+
         for (ProcessAdv pAdv:processAdvs) {
             System.out.println(pAdv);
         }
@@ -62,33 +64,56 @@ public class ProcessesSate {
             this.processState = processState;
         }
 
-        //calculate State
-        public static void CalculateState(ArrayList<ProcessAdv> processAdvs){
+        //calculate processes State
+        public static void CalculateStateWithPrint(ArrayList<ProcessAdv> processAdvs){
+            CalculateState(processAdvs,defaultStateListener_Print());
+        }
+
+        //calculate processes State
+        public static void CalculateState(ArrayList<ProcessAdv> processAdvs,ProcessesStateChangeListener processesStateChangeListener){
             for (int i = 0; i <= maxProcessTime; i++) {
-                System.out.println("Time : "+i);
+//                System.out.println("Time : "+i);
                 for (ProcessAdv p:processAdvs) {
-                     if(p.ariveTime==i){
+
+                    if(p.ariveTime==i){
                             p.setProcessState(ProcessState.New);
-                        }
-                        if(p.ariveTime<i&&(p.ariveTime+p.getWaitTime())>i&&p.getProcessState()==ProcessState.New){
-                            p.setProcessState(ProcessState.Ready);
-                        }
-                        if((p.ariveTime+p.getWaitTime())<i&&i<p.precessorTime){
-                            p.setProcessState(ProcessState.Run);
-                        }
+                    }
+                    if(p.ariveTime<i&&(p.ariveTime+p.getWaitTime())>i&&p.getProcessState()==ProcessState.New){
+                        p.setProcessState(ProcessState.Ready);
+                    }
+                    if((p.ariveTime+p.getWaitTime())<i&&i<p.precessorTime){
+                        p.setProcessState(ProcessState.Run);
+                    }
+                    if(p.precessorTime<=i){
+                        p.setProcessState(ProcessState.End);
+                    }
 
-                        if(p.precessorTime<=i){
-                            p.setProcessState(ProcessState.End);
-                        }
-
-                    System.out.println(p.id+" "+p.getProcessState());
+//                    System.out.println(p.id+" "+p.getProcessState());
                 }
 
-                System.out.println("---------------------------------------");
+                processesStateChangeListener.OnProcessesStateChange(i,processAdvs);
+//                System.out.println("---------------------------------------");
             }
 
         }
 
+        //for default Proccess Printer printer
+        public static ProcessesStateChangeListener defaultStateListener_Print(){
+            return (time,processAdvs)->{
+                    System.out.println("Time : "+time);
+                    for (ProcessAdv p:processAdvs) {
+                        System.out.println(p.id+" "+p.getProcessState());
+                    }
+                    System.out.println("---------------------------------------");
+            };
+        }
+        //for apply event after preocesses state are adjested
+        @FunctionalInterface
+        public interface ProcessesStateChangeListener{
+            void OnProcessesStateChange(int time,ArrayList<ProcessAdv> processAdvs);
+        }
+
+        //for preper data befor applay state Clcukator
         public static ArrayList<ProcessAdv>  advProcessFromNormalProcesses_Sort_FillTimes(ArrayList<MyProcess> normalProcesses){
             MyProcess.SortByArivTime_ASC(normalProcesses);
             ArrayList<ProcessAdv> processAdvs=new ArrayList<>();

@@ -28,7 +28,7 @@ public class AllLuctursTests {
         ArrayList<MyProcess> processes=new ArrayList<>(Arrays.asList(p1,p2,p3,p4,p5));
         ArrayList<ProcessesSate.ProcessAdv> processAdvs= ProcessesSate.ProcessAdv.advProcessFromNormalProcesses_Sort_FillTimes(processes);
 
-        ProcessesSate.ProcessAdv.CalculateState(processAdvs);
+        ProcessesSate.ProcessAdv.CalculateStateWithPrint(processAdvs);
         for (ProcessesSate.ProcessAdv pAdv:processAdvs) {
             System.out.println(pAdv);
         }
