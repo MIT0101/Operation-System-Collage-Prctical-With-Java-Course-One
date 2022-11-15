@@ -11,9 +11,35 @@ public class AllLuctursTests {
         //for Lecture One
         Write_Read_Test_L1();
         printLine();
+        System.out.println("PROCESS WAIT AND CPU TIME TEST .....");
+        ProcessWaitAndCpuTimeTest();
+        printLine();
         System.out.println("PROCESS STATE TEST .....");
         ProcessStateTest();
         printLine();
+        System.out.println("PROCESS STATE WITH NRE ALGO (INTERPUT) TEST ....");
+        ProcessStateWithInterputTest();
+        printLine();
+    }
+
+    /***************************************************---------PROCESS STATE WITH NRE ALGO (INTERPUT) TEST---------*******************************/
+
+    public static void ProcessStateWithInterputTest(){
+        MyProcess p1=new MyProcess("p1",10,10);
+        MyProcess p2=new MyProcess("p2",0,12);
+        MyProcess p3=new MyProcess("p3",3,8);
+        MyProcess p4=new MyProcess("p4",5,4);
+        MyProcess p5=new MyProcess("p5",12,5);
+
+        ArrayList<MyProcess> processes=new ArrayList<>(Arrays.asList(p1,p2,p3,p4,p5));
+        MyProcess.SortByArivTime_ASC(processes);
+        ArrayList<ProcessesSate.ProcessAdv> processAdvs= ProcessesSate.ProcessAdv.advProcessFromNormalProcesses_FillTimes_NoCpuTime(processes);
+
+
+        ProcessesSate.ProcessAdv.WaitTimesAndProccesTimes_New_Cuted2(processAdvs, ProcessesSate.ProcessAdv.defaultStateListener_Print());
+        for (ProcessesSate.ProcessAdv pAdv:processAdvs) {
+            System.out.println(pAdv);
+        }
     }
 
     /***************************************************---------PROCESS STATE TEST---------*******************************/
@@ -26,12 +52,28 @@ public class AllLuctursTests {
         MyProcess p5=new MyProcess("p5",4,4);
 
         ArrayList<MyProcess> processes=new ArrayList<>(Arrays.asList(p1,p2,p3,p4,p5));
-        ArrayList<ProcessesSate.ProcessAdv> processAdvs= ProcessesSate.ProcessAdv.advProcessFromNormalProcesses_Sort_FillTimes(processes);
+        ArrayList<ProcessesSate.ProcessAdv> processAdvs= ProcessesSate.ProcessAdv.advProcessFromNormalProcesses_FillTimes(processes);
 
         ProcessesSate.ProcessAdv.CalculateStateWithPrint(processAdvs);
         for (ProcessesSate.ProcessAdv pAdv:processAdvs) {
             System.out.println(pAdv);
         }
+    }
+
+    /***************************************************---------PROCESS WAUT AND CPU TIME TEST---------*******************************/
+
+    public static void ProcessWaitAndCpuTimeTest(){
+        MyProcess p1=new MyProcess("p1",2,6);
+        MyProcess p2=new MyProcess("p2",5,3);
+        MyProcess p3=new MyProcess("p3",1,8);
+        MyProcess p4=new MyProcess("p4",0,3);
+        MyProcess p5=new MyProcess("p5",4,4);
+
+
+        ArrayList<MyProcess> processes=new ArrayList<>(Arrays.asList(p1,p2,p3,p4,p5));
+        MyProcess.SortByArivTime_ASC(processes);
+        MyProcess.WaitTimesAndProccesTimes(processes);
+
     }
     /***************************************************---------READ AND WRITE  TEST---------*******************************/
 

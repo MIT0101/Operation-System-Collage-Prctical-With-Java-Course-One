@@ -1,6 +1,5 @@
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 
 public class ProcessesSate {
@@ -14,7 +13,9 @@ public class ProcessesSate {
         MyProcess p5=new MyProcess("p5",4,4);
 
         ArrayList<MyProcess> processes=new ArrayList<>(Arrays.asList(p1,p2,p3,p4,p5));
-        ArrayList<ProcessAdv> processAdvs=ProcessAdv.advProcessFromNormalProcesses_Sort_FillTimes(processes);
+        MyProcess.SortByArivTime_ASC(processes);
+         MyProcess.SortByBursTimeGroups(processes);
+        ArrayList<ProcessAdv> processAdvs=ProcessAdv.advProcessFromNormalProcesses_FillTimes(processes);
 
         ProcessAdv.CalculateStateWithPrint(processAdvs);
 
@@ -64,10 +65,179 @@ public class ProcessesSate {
             this.processState = processState;
         }
 
-        //calculate processes State
+        //calculate processes State must sorted
         public static void CalculateStateWithPrint(ArrayList<ProcessAdv> processAdvs){
             CalculateState(processAdvs,defaultStateListener_Print());
         }
+
+
+        //new Algo
+
+//        public static void  WaitTimesAndProccesTimes_New_Cuted(ArrayList<MyProcess> processes){
+//            MyProcess.SortByArivTime_ASC(processes);
+//            int size= processes.size();
+//            int cpuTime=0;
+//            for (int i = 0; i < size; i++) {
+//                MyProcess current=processes.get(i);
+//                int waitTime=cpuTime-current.ariveTime;
+//                MyProcess nextProcess=null;
+//                if(i+1<size){
+//                    nextProcess=processes.get(i+1);
+//                }
+//                cpuTime+=cpuTime+current.toDoneTime;
+//                MyProcess.SortByBursTimeGroups(processes);
+//
+//            }
+//
+//        }
+public static void WaitTimesAndProccesTimes_New_Cuted2(ArrayList<ProcessAdv> processAdvs,ProcessesStateChangeListener processesS){
+            ArrayList<ProcessAdv> intuptedProcess=new ArrayList<>();
+            HashSet<String> endedProcesses=new HashSet<>();
+
+            int startIndex=0;
+            int size=processAdvs.size();
+            ProcessAdv current=processAdvs.get(startIndex);
+            ProcessAdv nextProcess=null;
+            ProcessAdv currentRunning=null;
+            int maxCpuTime=current.toDoneTime;
+            current.setProcessState(ProcessState.Run);
+            for (int realCpuTime = 0; realCpuTime <= maxCpuTime&&endedProcesses.size()!=size; realCpuTime++) {
+                if(startIndex+1<size){
+                    nextProcess=processAdvs.get(startIndex+1);
+                }else{
+                    nextProcess=null;
+                }
+
+
+                if (nextProcess != null && nextProcess.ariveTime == realCpuTime) {
+                    //interption
+                    nextProcess.setProcessState(ProcessState.Run);
+                    currentRunning=nextProcess;
+                    current.setProcessState(ProcessState.Ready);
+                    //add without dublicate id
+//                    intuptedProcess.add(current);
+                    MyProcess.AddWithouDuplicate(intuptedProcess,current,(p1,p2)->{
+                        return p1.id.equals(p2.id);
+                    });
+                    current=nextProcess;
+                    current.toDoneTime-=1;
+                    maxCpuTime+=current.toDoneTime;
+
+                    startIndex++;
+
+                }else if(current.toDoneTime > 0){
+                    //now its running
+                    current.setProcessState(ProcessState.Run);
+                    currentRunning = current;
+                    current.toDoneTime-=1;
+                    current.setPrecessorTime(Math.max(0,current.getPrecessorTime())+1);
+                }else if(current.toDoneTime<=0) {
+                    //now process is ended
+                    //now pic one from interputed process baised on min burs time
+                    current.setProcessState(ProcessState.End);
+                    endedProcesses.add(current.id);
+//                    current.setPrecessorTime(Math.min(Math.max(-1,current.getPrecessorTime()),realCpuTime));
+                    intuptedProcess.remove(current);
+                    startIndex++;
+                    currentRunning = null;
+                    //here sore interputed
+                    MyProcess.SortByBursTime_ASC(intuptedProcess);
+                    if (intuptedProcess.size() > 0) {
+                        int inturptIndex = 0;
+                        current = intuptedProcess.get(inturptIndex);
+                        while (current.toDoneTime <= 0 && inturptIndex < intuptedProcess.size()) {
+                            current=intuptedProcess.get(inturptIndex);
+                            inturptIndex++;
+                        }
+                        if (inturptIndex<intuptedProcess.size()){
+                            currentRunning = current;
+                            current.toDoneTime--;
+                            current.setProcessState(ProcessState.Run);
+                            maxCpuTime+=current.toDoneTime;
+                            startIndex--;
+                        }
+                    }
+
+                }
+                processesS.OnProcessesStateChange(realCpuTime,processAdvs);
+
+                }
+
+            if(intuptedProcess.size()>0){
+
+                MyProcess.SortByBursTime_ASC(intuptedProcess);
+
+                for (ProcessAdv inturpted:intuptedProcess) {
+                    if(inturpted.toDoneTime>0){
+                        maxCpuTime+=inturpted.toDoneTime;
+                    }
+                }
+
+            }
+    for (ProcessAdv processAdv:processAdvs) {
+        if(processAdv.toDoneTime>0&&processAdv.getProcessState()!=ProcessState.End){
+            maxCpuTime+=processAdv.toDoneTime;
+        }
+    }
+
+}
+
+        //must sort by arrive time
+        public static void WaitTimesAndProccesTimes_New_Cuted(ArrayList<ProcessAdv> processAdvs,ProcessesStateChangeListener processesStateChangeListener){
+            ProcessAdv currentRunning=null;
+            ProcessAdv nextProcess=null;
+            int cpuTime=0;
+            int size=processAdvs.size();
+            for (int i = 0; i <size; i++) {
+                ProcessAdv current=processAdvs.get(i);
+                int waitTime=cpuTime-current.ariveTime;
+                if(i+1<size){
+                    nextProcess=processAdvs.get(i+1);
+                }
+                int workTime=current.toDoneTime;
+
+                if(current.getProcessState()!=ProcessState.End) {
+
+                    for (int j = 1; j <= workTime; j++) {
+                        if (nextProcess != null && nextProcess.ariveTime == cpuTime) {
+                            //interption
+                            nextProcess.setProcessState(ProcessState.Run);
+                            currentRunning=nextProcess;
+
+                            current.setProcessState(ProcessState.Ready);
+//                            nextProcess.toDoneTime--;
+
+                            //resort items
+                            MyProcess.SortByBursTimeGroups(processAdvs);
+//                             i=0;
+                            break;
+                        } else if (current.toDoneTime > 0) {
+                            current.setProcessState(ProcessState.Run);
+                            currentRunning = current;
+                            current.toDoneTime--;
+                            current.setPrecessorTime(Math.max(0,current.getPrecessorTime())+1);
+                            cpuTime++;
+                        } else {
+                            //here make cpu time like main cpu time
+                            current.setProcessState(ProcessState.End);
+                            currentRunning=null;
+                            MyProcess.SortByBursTime_ASC(processAdvs);
+//                            i=0;
+                            break;
+                        }
+                    }
+                }
+
+
+            }
+
+            System.out.println(cpuTime);
+
+//            processesStateChangeListener.OnProcessesStateChange(i,processAdvs);
+
+
+        }
+
 
         //calculate processes State
         public static void CalculateState(ArrayList<ProcessAdv> processAdvs,ProcessesStateChangeListener processesStateChangeListener){
@@ -112,10 +282,19 @@ public class ProcessesSate {
         public interface ProcessesStateChangeListener{
             void OnProcessesStateChange(int time,ArrayList<ProcessAdv> processAdvs);
         }
+        public static ArrayList<ProcessAdv>  advProcessFromNormalProcesses_FillTimes_NoCpuTime(ArrayList<MyProcess> normalProcesses){
+            ArrayList<ProcessAdv> processAdvs=new ArrayList<>();
+
+            for (MyProcess p: normalProcesses) {
+                ProcessAdv pAdv=new ProcessAdv(p,ProcessState.Null);
+                processAdvs.add(pAdv);
+            }
+
+            return processAdvs;
+        }
 
         //for preper data befor applay state Clcukator
-        public static ArrayList<ProcessAdv>  advProcessFromNormalProcesses_Sort_FillTimes(ArrayList<MyProcess> normalProcesses){
-            MyProcess.SortByArivTime_ASC(normalProcesses);
+        public static ArrayList<ProcessAdv>  advProcessFromNormalProcesses_FillTimes(ArrayList<MyProcess> normalProcesses){
             ArrayList<ProcessAdv> processAdvs=new ArrayList<>();
 
             int cpuTime=0;
