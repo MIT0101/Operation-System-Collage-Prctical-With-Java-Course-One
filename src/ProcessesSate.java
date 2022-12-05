@@ -90,7 +90,123 @@ public class ProcessesSate {
 //            }
 //
 //        }
-public static void WaitTimesAndProccesTimes_New_Cuted2(ArrayList<ProcessAdv> processAdvs,ProcessesStateChangeListener processesS){
+public static void WaitTimesAndProccesTimes_New_Cuted3(ArrayList<ProcessAdv> processAdvs,ProcessesStateChangeListener processesS){
+    ArrayList<ProcessAdv> intuptedProcess=new ArrayList<>();
+    HashSet<String> endedProcesses=new HashSet<>();
+
+    int startIndex=0;
+    int size=processAdvs.size();
+    ProcessAdv current=processAdvs.get(startIndex);
+    ProcessAdv nextProcess=null;
+    ProcessAdv currentRunning=null;
+    int maxCpuTime=current.toDoneTime;
+    current.setProcessState(ProcessState.Run);
+    for (int realCpuTime = 0; realCpuTime <= maxCpuTime&&endedProcesses.size()!=size; realCpuTime++) {
+        if(realCpuTime==4){
+            System.out.print("");
+        }
+        if(startIndex+1<size){
+            nextProcess=processAdvs.get(startIndex+1);
+        }else{
+            nextProcess=null;
+        }
+
+        if (nextProcess != null && nextProcess.ariveTime == realCpuTime) {
+            //interption
+            current.setProcessState(ProcessState.Ready);
+            MyProcess.AddWithouDuplicate(intuptedProcess,current,(p1,p2)->{
+                return p1.id.equals(p2.id);
+            });
+            MyProcess.AddWithouDuplicate(intuptedProcess,nextProcess,(p1,p2)->{
+                return p1.id.equals(p2.id);
+            });
+            //sort interpted process
+            MyProcess.SortByBursTime_ASC(intuptedProcess);
+            //pic process by mini burtime
+            ProcessAdv processToRun=null;
+            int i=0;
+            if(intuptedProcess.size()>0){
+                for (ProcessAdv processInterpted:intuptedProcess) {
+                    if(processInterpted.getProcessState()!=ProcessState.End){
+                        processToRun=processInterpted;
+                        break;
+                    }
+                    i++;
+                }
+            }
+            if(i>=processAdvs.size()||processToRun==null){
+                continue;
+            }
+            processToRun.setProcessState(ProcessState.Run);
+            currentRunning=processToRun;
+            //add without dublicate id
+//            intuptedProcess.add(current);
+//            MyProcess.AddWithouDuplicate(intuptedProcess,current,(p1,p2)->{
+//                return p1.id.equals(p2.id);
+//            });
+            current=processToRun;
+            current.toDoneTime-=1;
+            maxCpuTime+=current.toDoneTime;
+            startIndex++;
+
+        }else if(current.toDoneTime > 0){
+            //now its running normal
+            current.setProcessState(ProcessState.Run);
+            currentRunning = current;
+            current.toDoneTime-=1;
+            current.setPrecessorTime(Math.max(0,current.getPrecessorTime())+1);
+        }else if(current.toDoneTime<=0) {
+            //now process is ended
+            //now pic one from interputed process baised on min burs time
+            current.setProcessState(ProcessState.End);
+            endedProcesses.add(current.id);
+//          current.setPrecessorTime(Math.min(Math.max(-1,current.getPrecessorTime()),realCpuTime));
+            intuptedProcess.remove(current);
+            startIndex++;
+            currentRunning = null;
+            //here resort interputed
+            MyProcess.SortByBursTime_ASC(intuptedProcess);
+            if (intuptedProcess.size() > 0) {
+                int inturptIndex = 0;
+                current = intuptedProcess.get(inturptIndex);
+                while (current.toDoneTime <= 0 && inturptIndex < intuptedProcess.size()) {
+                    current=intuptedProcess.get(inturptIndex);
+                    inturptIndex++;
+                }
+                if (inturptIndex<intuptedProcess.size()){
+                    currentRunning = current;
+                    current.toDoneTime--;
+                    current.setProcessState(ProcessState.Run);
+                    maxCpuTime+=current.toDoneTime;
+                    startIndex--;
+                }
+            }
+
+        }
+        processesS.OnProcessesStateChange(realCpuTime,processAdvs);
+    }
+
+    if(intuptedProcess.size()>0){
+
+        MyProcess.SortByBursTime_ASC(intuptedProcess);
+
+        for (ProcessAdv inturpted:intuptedProcess) {
+            if(inturpted.toDoneTime>0){
+                maxCpuTime+=inturpted.toDoneTime;
+            }
+        }
+
+    }
+    for (ProcessAdv processAdv:processAdvs) {
+        if(processAdv.toDoneTime>0&&processAdv.getProcessState()!=ProcessState.End){
+            maxCpuTime+=processAdv.toDoneTime;
+        }
+    }
+
+}
+
+        //must sort by arrive time
+        public static void WaitTimesAndProccesTimes_New_Cuted2(ArrayList<ProcessAdv> processAdvs,ProcessesStateChangeListener processesS){
             ArrayList<ProcessAdv> intuptedProcess=new ArrayList<>();
             HashSet<String> endedProcesses=new HashSet<>();
 
@@ -161,7 +277,7 @@ public static void WaitTimesAndProccesTimes_New_Cuted2(ArrayList<ProcessAdv> pro
                 }
                 processesS.OnProcessesStateChange(realCpuTime,processAdvs);
 
-                }
+            }
 
             if(intuptedProcess.size()>0){
 
@@ -174,15 +290,13 @@ public static void WaitTimesAndProccesTimes_New_Cuted2(ArrayList<ProcessAdv> pro
                 }
 
             }
-    for (ProcessAdv processAdv:processAdvs) {
-        if(processAdv.toDoneTime>0&&processAdv.getProcessState()!=ProcessState.End){
-            maxCpuTime+=processAdv.toDoneTime;
+            for (ProcessAdv processAdv:processAdvs) {
+                if(processAdv.toDoneTime>0&&processAdv.getProcessState()!=ProcessState.End){
+                    maxCpuTime+=processAdv.toDoneTime;
+                }
+            }
+
         }
-    }
-
-}
-
-        //must sort by arrive time
         public static void WaitTimesAndProccesTimes_New_Cuted(ArrayList<ProcessAdv> processAdvs,ProcessesStateChangeListener processesStateChangeListener){
             ProcessAdv currentRunning=null;
             ProcessAdv nextProcess=null;
