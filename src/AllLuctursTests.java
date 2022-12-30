@@ -28,9 +28,32 @@ public class AllLuctursTests {
         ProcessWaitAndCpuTimeUsingSJF_PRIMITVE_CollageTest();
         printLine();
 
+        System.out.println("PRIORITY PRIMITIVE ALGO WITH AVGS (WAIT,TURN AROUND) AND CPU IDLE TIME COLLAGE TEST ....");
+        ProcessWaitAndCpuTimeUsingPRIORITY_PRIMITVE_CollageTest();
+        printLine();
+
     }
 
-    /***************************************************---------PROCESS SJF PRIMITVE TEST---------*******************************/
+    /***************************************************---------PROCESS PRIORITY PRIMITIVE WITH AVGS , IDLE TIMES TEST---------*******************************/
+    public static void ProcessWaitAndCpuTimeUsingPRIORITY_PRIMITVE_CollageTest() {
+        MyProcess p1=new MyProcess("p1",0,2,0);
+        MyProcess p2=new MyProcess("p2",1,4,0);
+        MyProcess p3=new MyProcess("p3",2,5,3);
+        MyProcess p4=new MyProcess("p4",4,4,1);
+
+//     for make idle for 2 times (will be idle form 11 to 13)
+//        MyProcess p4=new MyProcess("p4",13,4,1);
+
+
+        ArrayList<MyProcess> processes=new ArrayList<>(Arrays.asList(p1,p2,p3,p4));
+
+        WithPriority.calculatePriority_Primitive_WITH_WAIT_TURN_AVG_IDLE(processes);
+
+    }
+
+
+
+        /***************************************************---------PROCESS SJF PRIMITIVE TEST---------*******************************/
 
     public static void ProcessWaitAndCpuTimeUsingSJF_PRIMITVE_CollageTest(){
         MyProcess p1=new MyProcess("p1",0,16);
