@@ -16,18 +16,20 @@ public class WithPriority {
         MyProcess p2=new MyProcess("p2",1,4,0);
         MyProcess p3=new MyProcess("p3",2,5,3);
         MyProcess p4=new MyProcess("p4",4,4,1);
+ //     for make idle for 2 times (will be idle form 11 to 13)
+//        MyProcess p4=new MyProcess("p4",13,4,1);
 
 
         ArrayList<MyProcess> processes=new ArrayList<>(Arrays.asList(p1,p2,p3,p4));
 
-        calculatePriority_Primitive_2(processes);
+        calculatePriority_Primitive_WITH_WAIT_TURN_AVG_IDLE(processes);
 
 //        calculatePriority_SameTime_Non_Primitive(processes);
 
 
     }
 
-    public static  <T extends MyProcess> void calculatePriority_Primitive_2(ArrayList<T> processes){
+    public static  <T extends MyProcess> void calculatePriority_Primitive_WITH_WAIT_TURN_AVG_IDLE(ArrayList<T> processes){
 
         ArrayList<T> endedProcesses=new ArrayList<>();
 
@@ -39,8 +41,9 @@ public class WithPriority {
             return p1.priority-p2.priority;
         });
 
-
         int realTime=0;
+
+        int totalIdleTime=0;
 
         //set current Running Process
         T currentRunningProcess=null;
@@ -55,7 +58,9 @@ public class WithPriority {
             // If the queue is empty, move the current time to the arrival time of the next process
             //cpu is idle
             if (priorityQueue_ReadyQueue.isEmpty()&&!processes.isEmpty()&&currentRunningProcess==null) {
+                int temp=realTime;
                 realTime = processes.get(0).ariveTime;
+                totalIdleTime+=realTime-temp;
                 continue;
             }
             //check if the priority in queue is higher than current running
@@ -69,7 +74,7 @@ public class WithPriority {
 
             }
 
-            //if there is no running process pic one from priority
+            //if there is no running process pick one from priority
             if(currentRunningProcess==null){
                 if(!priorityQueue_ReadyQueue.isEmpty()){
                     currentRunningProcess=priorityQueue_ReadyQueue.poll();
@@ -86,6 +91,7 @@ public class WithPriority {
 
             }
             System.out.println("-----------------------------");
+
             //check if current running process is ended
             if(currentRunningProcess!=null&&currentRunningProcess.toDoneTime<=0){
                 endedProcesses.add(currentRunningProcess);
@@ -110,6 +116,7 @@ public class WithPriority {
         double waitAvg=totalWaitTime/endedProcesses.size();
         double turnAroundAvg=totalTurnAroundTime/endedProcesses.size();
 
+        System.out.println("Total Cpu Idle Time :"+totalIdleTime);
         System.out.println("Wait Time Avg :"+waitAvg);
         System.out.println("Turn Around Time Avg :"+turnAroundAvg);
 
